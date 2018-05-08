@@ -26,6 +26,9 @@ typedef struct bufferList {
 
 bufferList *lastread;
 
+void *thread_reader(void args);
+void file_open(string filename);
+
 int main(int argc, char * argv[])
 {
 	for(int i = 1; i<3;i++){
