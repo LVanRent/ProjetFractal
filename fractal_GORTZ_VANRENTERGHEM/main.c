@@ -41,7 +41,12 @@ int main(int argc, char * argv[])
 		}
 	}
 	pthread_create(reader,&thread_reader,(void*) &argv[])//créateur du fichier 
-
+	pthread_create(calculator,&thread_calc,NULL);
+	pthread_join();
+	pthread_join();
+	if(showall == 0){
+		//afficher le BMP du meilleu
+	}
 	char* outfile = argv[argc-1]; //fichier output
 	
 }
@@ -58,7 +63,7 @@ void *thread_reader(void args){
 /*ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
 type de fichier name-w-h-cR-cI*/
 // /!\ commentaires #
-void file_open(filename){
+void file_open(string filename){
 	int scancount;
 	bufferList * new_fract = (bufferList *) malloc(sizeof(bufferList));
 	FILE *fp = fopen(filename,"r");
@@ -72,15 +77,4 @@ void file_open(filename){
 		lastread = new_fract;
 	}
 	
-}
-
-void *thread_comparateur(){
-	while(fcount > 0){
-		sem_wait();
-		if(){
-			
-		}
-		sem_post();
-		
-	}
 }
