@@ -11,7 +11,20 @@ int fcount = 0;
 pthread_t reader;
 pthread_t calc[];
 pthread_t comparateur;
-char *fract[][5];
+//char *fract[][5];
+
+
+typedef struct bufferList {
+	struct bufferList * next;
+	char * name;
+	int w;
+	int h;
+	double cR;
+	double cI;
+		
+} bufferList;
+
+bufferList *lastread;
 
 int main(int argc, char * argv[])
 {
@@ -42,12 +55,21 @@ void *thread_reader(void args){
 }
 
 
-//ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
-//type de fichier name-w-h-cR-cI
-void file_open(filename)
-	FILE fp = fopen(filename,"r");
+/*ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
+type de fichier name-w-h-cR-cI*/
+// /!\ commentaires #
+void file_open(filename){
+	int scancount;
+	bufferList * new_fract = (bufferList *) malloc(sizeof(bufferList));
+	FILE *fp = fopen(filename,"r");
 	for(int i = 0; pas fini; i++){
-		fract[i][0] = fscanf(fp,'');
+		scancount = fscanf(fp,"%s %d %d %f %f \n",new_fract->name,new_fract.w,new_fract.h,new_fract.cR,new_fract.cI);
+		if(scancount != 5) {
+		//erreur quelquepart
+		}
+		//à protéger
+		new_fract->next = lastread;
+		lastread = new_fract;
 	}
 	
 }
