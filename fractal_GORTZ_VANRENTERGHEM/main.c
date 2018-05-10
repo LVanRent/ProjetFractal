@@ -15,7 +15,7 @@ char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
 struct fractal *HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
-struct fractal *MaxMean;
+struct fractal *MaxMean; //fractale ayant la plus grande moyenne
 
 void *thread_reader(void args);
 void *thread_calc();
@@ -41,8 +41,8 @@ int main(int argc, char * argv[])
 			nonfiles+=2;
 		}
 	}
-	pthread_create(reader,&thread_reader,(void*) &argv[])//créateur du fichier 
-	for(int i = 0; i < maxthreads-1; i++){
+	pthread_create(reader,&thread_reader,(void*) &argv[])//lecteur des fichiers
+	for(int i = 0; i < maxthreads ; i++){
 		pthread_create(calc[i],&thread_calc,NULL);
 	}
 	pthread_join(reader,NULL);
@@ -55,6 +55,8 @@ int main(int argc, char * argv[])
 }
 
 /*routine du thread séparant les arguments en noms de fichiers pour les ouvrir individuellement dans la routine file_open()
+* dans le cas d'un '-', fait appel à un thread std_open() pour écrire sur l'entrée standard en parrallèle de la création 
+* des structures
 */
 void *thread_reader(void args){
 	char* argv[] = (char *) args;
@@ -64,7 +66,7 @@ void *thread_reader(void args){
 		if(argv[i][0] == '-'){
 			input = 1;
 			pthread_create(stdin,&std_open,NULL);
-			i++;
+			i--;
 		}
 		else{
 			file_open(argv[i]);
@@ -75,6 +77,10 @@ void *thread_reader(void args){
 	}
 }
 
+
+/*routine des threads qui calculent les valeurs des pixels, calcule également la moyenne, vérifie si il s'agit de la meilleure
+* et converti en BMP si '-d' est spécifié
+*/
 void *thread_calc(){
 	struct fractal * current_fract;
 	int w;
@@ -92,19 +98,23 @@ void *thread_calc(){
 			}
 		}
 		double current_mean = ((double) mean)/(w*h); 
-		current_fract->mean =
+		current_fract->mean = current_mean;
 		if(showall){
 			write_bitmap_sdl(current_fract,current_fract->name));
 		}
-		if(MaxMean->mean <= current_mean){
+		if(MaxMean->mean < current_mean){
 			fractal_free(MaxMean);
 			MaxMean = current_frac;
+		}
+		else{
+			fractal_free(current_fract);
 		}
 	}
 }
 
-/*ouvre et écrit dans la fifo fract les specs des fractales dans le fichier filename
-type de fichier name-w-h-cR-cI*/
+/*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
+* au format spécifié
+*/
 void file_open(char * filename){
 	int scancount=5;
 	FILE *fp = fopen(filename,"r");
@@ -125,7 +135,6 @@ void file_open(char * filename){
 		//producteur
 		if(scancount == 5){
 			pushRead(new_fract);
-			//printf("ajout de %s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
 		}
 	}
 	free(new_fract);
@@ -133,20 +142,22 @@ void file_open(char * filename){
 }
 
 
-/*récupère les fractales sur l'entrée standard*/
+/*routine du thread qui récupère les fractales sur l'entrée standard
+*/
 void std_open(){
-	int scancount=5;
 	int exit = 0;
 	while(!exit){
 		struct fractal* new_fract ;
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
-		printf("entrez la fractale au format nom withd height a b séparé par des espace et appuyez sur entrer pour valider ou entrez exit pour terminer\n");
-		scancount = fscanf(stdin,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
-		if(strcomp(new_fract,"exit") == 1){
+		printf("entrez le nom de la fractale ou exit pour terminer suivit de la touche entré\n");
+		scanf("%s\n",&new_fract->name);
+		if(strcomp(new_fract,"exit") == 0){
 			fractal_free(new_fract);
 			exit = 1;
 		}
 		else{
+			printf("entrez les paramètres de la fractale au format width height a b séparé par des espace et appuyez sur entrer pour valider\n");
+			scancount = scanf("%d %d %lf %lf\n",&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
 			pushRead(new_fract);	
 			printf("fractale enregistrée\n");
 		}
