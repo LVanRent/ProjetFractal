@@ -3,14 +3,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
+#include <semaphore.h>
 #include "fractal.h"
-
 
 pthread_mutex_t mutex;
 pthread_mutex_t mutexmean;
 sem_t empty;
 sem_t full;
-
 
 int maxthread = 5;
 int showall = 0;
