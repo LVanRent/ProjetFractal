@@ -63,7 +63,7 @@ int main(int argc, char * argv[])
 	if(calc == NULL){
 		exit(EXIT_FAILURE);
 	}
-	int err = pthread_create(&reader,(void*) &argv,&thread_reader,NULL);//lecteur des fichiers
+	int err = pthread_create(&reader,NULL,&thread_reader,(void*) &argv);//lecteur des fichiers
 	if(err != 0){
 		exit(EXIT_FAILURE);
 	}
