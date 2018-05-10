@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <semaphore.h>
-#include "fractal.h"
+#include "libfractal/fractal.h"
 
 pthread_mutex_t mutex;
 pthread_mutex_t mutexmean;
