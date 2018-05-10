@@ -10,15 +10,14 @@ int nonfiles =0;
 int fcount = 0;
 pthread_t reader;
 pthread_t calc[];
-pthread_t comparateur;
-//char *fract[][5];
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
 struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
 
 void *thread_reader(void args);
 void file_open(string filename);
-void addToBuffer
+void pushRead(struct fractal* new_fract);
+struct fractal* popRead();
 
 int main(int argc, char * argv[])
 {
@@ -78,7 +77,7 @@ void file_open(char * filename){
 		}
 		//producteur
 		if(scancount == 5){
-			addToBuffer(new_fract);
+			pushRead(new_fract);
 			//printf("ajout de %s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
 		}
 	}
@@ -86,7 +85,56 @@ void file_open(char * filename){
 		
 }
 
-void addToBuffer(struct fractal*){
-
+void pushRead(struct fractal* new_fract){
+	//zone critique
+	new_fract->next = HeadRead;
+	HeadRead = new_fract;
+	//end zone critique
 }
+
+struct fractal* popRead(){
+	//zone critique
+	struct fractal* new_fract = HeadRead;
+	HeadRead = new_fract->next;
+	//end zone critique
+	return(new_fract);
+}
+
+void pushCalc(struct fractal* new_fract){
+	struct fract *oldList;
+	//zone critique
+	if(!showall){
+		//zone critique
+		if(new_fract->mean > HeadCalc->mean){
+			oldList = HeadCalc;
+			HeadCalc = new_fract;
+		}
+		else if(new_fract->mean == HeadCalc->mean){
+			new_fract->next = HeadCalc;
+			HeadCalc = new_fract;
+		}
+		else{
+			oldList = new_fract;
+		}
+	}
+	else{
+		new_fract->next = HeadCalc;
+		HeadCalc = new_fract;	
+	}
+	//end zone critique
+	if(oldList != NULL){
+		freeCalc(oldList);
+	}
+}
+
+void freeCalc(struct fract* head){
+	struct fractal * toFree;
+	while(head =! NULL){
+		toFree = head;
+		head = head->next;
+		fractal_free(toFree);
+	}
+}
+
+
 
