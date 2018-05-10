@@ -28,7 +28,7 @@ struct fractal *MaxMean; //fractale ayant la plus grande moyenne
 void *thread_reader(void *args);
 void *thread_calc();
 void file_open(char *filename);
-void std_open();
+void *std_open();
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
 int g_argc; //global argc
@@ -67,7 +67,7 @@ int main(int argc, char * argv[])
 	if(err != 0){
 		exit(EXIT_FAILURE);
 	}
-	for(i = 0; i < maxthreads ; i++){
+	for(i = 0; i < maxthread ; i++){
 		err = pthread_create(&calc[i],NULL,&thread_calc,NULL);
 		if(err != 0){
 			exit(EXIT_FAILURE);
