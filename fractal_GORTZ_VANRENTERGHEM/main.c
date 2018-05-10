@@ -7,10 +7,10 @@
 int maxthread = 500;
 int showall =0;
 int nonfiles =0;
-int fcount = 0;
+int readFlag = 1;
 pthread_t reader;
 pthread_t calc[];
-char *outputf;
+char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
 struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
@@ -25,6 +25,7 @@ void freeCalc(struct fractal * head);
 
 int main(int argc, char * argv[])
 {
+	outfile = argv[argc-1]; //fichier output
 	for(int i = 1; i<3;i++){
 		if(strcomp("-d",argv[i])){//récupération de showall
 			showall = 1;
@@ -42,13 +43,16 @@ int main(int argc, char * argv[])
 		pthread_create(calc[i],&thread_calc,NULL);
 	}
 	pthread_join(reader,NULL);
+	readFlag = 0;
 	for(int i = 0; i < maxthreads-1; i++){
 		pthread_join(cacl[i],NULL);
 	}
-	if(showall == 0){
-		//afficher le BMP du meilleu
+	for(int i = 0; i<maxthread;i++){
+		pthread_create(thread_toBMP[i],&toBMP,NULL);
 	}
-	char* outfile = argv[argc-1]; //fichier output
+	for(int i = 0; i<maxthread;i++){
+		pthread_join(thread_toBMP[i],NULL);
+	}
 	
 }
 
@@ -74,17 +78,19 @@ void *thread_reader(void args){
 }
 
 void *thread_calc(){
-	//zone critique
-	struct fractal * current_fract = popRead();
-	//end zone critique
-	int w = fractal_get_width();
-	int h = fractal_get_height();
-	for(int i = 0; i<w;i++){
-		for(int j = 0; j<h ; j++){
-			fractal_compute_value(current_fract,i,j);
+	while(readFlag){
+		//zone critique
+		struct fractal * current_fract = popRead();
+		//end zone critique
+		int w = fractal_get_width();
+		int h = fractal_get_height();
+		for(int i = 0; i<w;i++){
+			for(int j = 0; j<h ; j++){
+				fractal_compute_value(current_fract,i,j);
+			}
 		}
+		current_fract->mean = meanCalc(current_fract);
 	}
-	current_fract->mean = meanCalc(current_fract);
 }
 
 /*ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
