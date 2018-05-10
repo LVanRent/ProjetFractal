@@ -18,6 +18,9 @@ void *thread_reader(void args);
 void file_open(string filename);
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
+void pushCalc(struct fractal * new_fract);
+void freeCalc(struct fractal * head);
+
 
 int main(int argc, char * argv[])
 {
@@ -34,9 +37,13 @@ int main(int argc, char * argv[])
 		}
 	}
 	pthread_create(reader,&thread_reader,(void*) &argv[])//créateur du fichier 
-	pthread_create(calculator,&thread_calc,NULL);
-	pthread_join();
-	pthread_join();
+	for(int i = 0; i < maxthreads-1; i++){
+		pthread_create(calc[i],&thread_calc,NULL);
+	}
+	pthread_join(reader,NULL);
+	for(int i = 0; i < maxthreads-1; i++){
+		pthread_join(cacl[i],NULL);
+	}
 	if(showall == 0){
 		//afficher le BMP du meilleu
 	}
@@ -44,11 +51,24 @@ int main(int argc, char * argv[])
 	
 }
 
+/*routine du thread séparant les arguments en noms de fichiers pour les ouvrir individuellement dans la routine file_open()
+*/
 void *thread_reader(void args){
 	char* argv[] = (char *) args;
 	int argc = length(argv);
+	int input = 0;
 	for(int i = argc-2;i > nonfiles;i--){
-		file_open(argv[i]);
+		if(argv[i][0] == '-'){
+			input = 1;
+			pthread_create(stdin,&std_open,NULL);
+			i++;
+		}
+		else{
+			file_open(argv[i]);
+		}
+	}
+	if(input){
+		pthread_join(stdin,NULL);
 	}
 }
 
@@ -57,9 +77,6 @@ void *thread_reader(void args){
 type de fichier name-w-h-cR-cI*/
 void file_open(char * filename){
 	int scancount=5;
-	printf("fopen\n");
-	printf("filename1, %s\n",filename);
-	
 	FILE *fp = fopen(filename,"r");
 	if(fp == NULL) printf("failopen\n");
 	struct fractal* new_fract ;
@@ -83,6 +100,25 @@ void file_open(char * filename){
 	}
 	free(new_fract);
 		
+}
+
+void std_open(){
+	int scancount=5;
+	int exit = 0;
+	while(!exit){
+		struct fractal* new_fract ;
+		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
+		printf("entrez la fractale au format nom withd height a b séparé par des espace et appuyez sur entrer pour valider ou entrez exit pour terminer\n");
+		scancount = fscanf(stdin,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
+		if(strcomp(new_fract,"exit") == 1){
+			fractal_free(new_fract);
+			exit = 1;
+		}
+		else{
+			pushRead(new_fract);	
+			printf("fractale enregistrée\n");
+		}
+	}		
 }
 
 void pushRead(struct fractal* new_fract){
