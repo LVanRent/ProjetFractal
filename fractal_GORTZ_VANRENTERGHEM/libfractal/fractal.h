@@ -8,7 +8,7 @@ struct fractal {
     double a;
     double b;
     double dessin[][]; //matrice contenant les valeurs de la fractale évaluées en chaque point
-    int mean;
+    double mean;
     struct fractal * next;
 };
 
