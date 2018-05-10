@@ -14,16 +14,14 @@ pthread_t calc[];
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
-struct fractal *HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
 struct fractal *MaxMean; //fractale ayant la plus grande moyenne
 
 void *thread_reader(void args);
 void *thread_calc();
 void file_open(string filename);
+void std_open();
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
-void pushCalc(struct fractal * new_fract);
-void freeCalc(struct fractal * head);
 
 
 int main(int argc, char * argv[])
@@ -103,8 +101,10 @@ void *thread_calc(){
 			write_bitmap_sdl(current_fract,current_fract->name));
 		}
 		if(MaxMean->mean < current_mean){
+			//zone critique
 			fractal_free(MaxMean);
 			MaxMean = current_frac;
+			//end zone critique
 		}
 		else{
 			fractal_free(current_fract);
@@ -157,7 +157,7 @@ void std_open(){
 		}
 		else{
 			printf("entrez les paramètres de la fractale au format width height a b séparé par des espace et appuyez sur entrer pour valider\n");
-			scancount = scanf("%d %d %lf %lf\n",&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
+			scanf("%d %d %lf %lf\n",&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
 			pushRead(new_fract);	
 			printf("fractale enregistrée\n");
 		}
@@ -182,46 +182,6 @@ struct fractal* popRead(){
 	count--;
 	//end zone critique
 	return(new_fract);
-}
-
-/* dans le cas showall = 1 ajoute la fractale calculée sur la lifo des fractales de moyenne maximum en cas d'égalité,
-la remplace si meilleur, est ignoré sinon
-dans le cas showall= 1 ajoute la fractale à la lifo de toutes les fractales déjà calculées*/
-void pushCalc(struct fractal* new_fract){
-	struct fract *oldList;
-	//zone critique
-	if(!showall){
-		if(new_fract->mean > HeadCalc->mean){
-			oldList = HeadCalc;
-			HeadCalc = new_fract;
-		}
-		else if(new_fract->mean == HeadCalc->mean){
-			new_fract->next = HeadCalc;
-			HeadCalc = new_fract;
-		}
-		else{
-			oldList = new_fract;
-		}
-	}
-	else{
-		new_fract->next = HeadCalc;
-		HeadCalc = new_fract;	
-	}
-	//end zone critique
-	if(oldList != NULL){
-		freeCalc(oldList);
-	}
-}
-
-
-
-void freeCalc(struct fract* head){
-	struct fractal * toFree;
-	while(head =! NULL){
-		toFree = head;
-		head = head->next;
-		fractal_free(toFree);
-	}
 }
 
 
