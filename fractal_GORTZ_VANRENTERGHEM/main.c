@@ -18,8 +18,8 @@ int showall = 0;
 int nonfiles = 0;
 int readFlag = 1;
 int count = 0;
-pthread_t *reader;
-pthread_t **calc;
+pthread_t reader;
+pthread_t *calc;
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
@@ -50,25 +50,25 @@ int main(int argc, char * argv[])
 			nonfiles++;
 		}	
 		if(strcmp("--maxthreads",argv[i])){//récupération de maxthread	
-			maxthread = (argv[i+1]);
+			maxthread = atoi(argv[i+1]);
 			i++;
 			nonfiles+=2;
 		}
 	}
-	reader = (pthread_t *) malloc(sizeof(pthread_t));	
-	if(reader == NULL){
-		exit(EXIT_FAILURE);
-	}
+	//reader = (pthread_t *) malloc(sizeof(pthread_t));	
+	//if(reader == NULL){
+	//	exit(EXIT_FAILURE);
+	//}
 	calc = (pthread_t *)malloc(sizeof(pthread_t)*maxthread);
 	if(calc == NULL){
 		exit(EXIT_FAILURE);
 	}
-	int err = pthread_create(reader,&thread_reader,(void*) &argv,NULL);//lecteur des fichiers
+	int err = pthread_create(&reader,(void*) &argv,&thread_reader,NULL);//lecteur des fichiers
 	if(err != 0){
 		exit(EXIT_FAILURE);
 	}
 	for(i = 0; i < maxthreads ; i++){
-		err = pthread_create(calc[i],&thread_calc,NULL,NULL);
+		err = pthread_create(&calc[i],NULL,&thread_calc,NULL);
 		if(err != 0){
 			exit(EXIT_FAILURE);
 		}
@@ -80,6 +80,7 @@ int main(int argc, char * argv[])
 	}
 	write_bitmap_sdl(MaxMean,outfile);
 	fractal_free(MaxMean);
+	return(0);
 }
 
 /*routine du thread séparant les arguments en noms de fichiers pour les ouvrir individuellement dans la routine file_open()
@@ -91,10 +92,11 @@ void *thread_reader(void *args){
 	int argc = g_argc;
 	int input = 0;
 	int i;
+	pthread_t stdin;
 	for(i = argc-2;i > nonfiles;i--){
 		if(argv[i][0] == '-'){
 			input = 1;
-			pthread_create(stdin,&std_open,NULL,NULL);
+			pthread_create(&stdin,NULL,&std_open,NULL);
 			i--;
 		}
 		else{
@@ -182,7 +184,7 @@ void *std_open(){
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("entrez le nom de la fractale ou exit pour terminer suivit de la touche entré\n");
 		scanf("%s\n",&new_fract->name);
-		if(strcmp(new_fract,"exit") == 0){
+		if(strcmp(new_fract->name,"exit") == 0){
 			fractal_free(new_fract);
 			exit = 1;
 		}
