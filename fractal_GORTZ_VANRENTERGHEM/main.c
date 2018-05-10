@@ -7,6 +7,7 @@
 #include <semaphore.h>
 #include "libfractal/fractal.h"
 
+#define N 20
 pthread_mutex_t mutex;
 pthread_mutex_t mutexmean;
 sem_t empty;
