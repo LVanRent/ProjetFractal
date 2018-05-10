@@ -18,6 +18,7 @@ struct fractal *HeadRead; //head de la FIFO des fractales lues
 struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
 
 void *thread_reader(void args);
+void *thread_calc()
 void file_open(string filename);
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
@@ -121,12 +122,12 @@ void file_open(char * filename){
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("malloc\n");
 		printf("fscanf\n");
-		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
+		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 		if(scancount != 5 && scancount != EOF) {
 			printf("%d %s \n", scancount,new_fract->name);
 			while(new_fract->name[0]=='#'){
 				while(fgetc(fp) !='\n'){}
-				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
+				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&new_fract->name,&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 			}
 		}
 		//producteur
