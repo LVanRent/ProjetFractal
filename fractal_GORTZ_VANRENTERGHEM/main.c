@@ -11,7 +11,6 @@ int readFlag = 1;
 int count = 0;
 pthread_t reader;
 pthread_t calc[];
-pthread_t toBMP[];
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
@@ -19,7 +18,7 @@ struct fractal *HeadCalc; //head de la fifo des fractales calculés (soit à aff
 struct fractal *MaxMean;
 
 void *thread_reader(void args);
-void *thread_calc()
+void *thread_calc();
 void file_open(string filename);
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
@@ -51,13 +50,8 @@ int main(int argc, char * argv[])
 	for(int i = 0; i < maxthreads-1; i++){
 		pthread_join(cacl[i],NULL);
 	}
-	for(int i = 0; i<maxthread;i++){
-		pthread_create(thread_toBMP[i],&toBMP,NULL);
-	}
-	for(int i = 0; i<maxthread;i++){
-		pthread_join(thread_toBMP[i],NULL);
-	}
-	
+	write_bitmap_sdl(MaxMean,outfile));
+	fractal_free(MaxMean);
 }
 
 /*routine du thread séparant les arguments en noms de fichiers pour les ouvrir individuellement dans la routine file_open()
@@ -97,20 +91,16 @@ void *thread_calc(){
 				mean += fractal_compute_value(current_fract,i,j);
 			}
 		}
-		current_fract->mean = ((double) mean)/(w*h); 
+		double current_mean = ((double) mean)/(w*h); 
+		current_fract->mean =
 		if(showall){
 			write_bitmap_sdl(current_fract,current_fract->name));
 		}
-		
+		if(MaxMean->mean <= current_mean){
+			fractal_free(MaxMean);
+			MaxMean = current_frac;
+		}
 	}
-}
-
-void *toBMP(){
-	struct *fractal current_fract = popCalc();
-	if(showall){
-		write_bitmap_sdl(current_fract,current_fract->name));
-	}
-	write_bitmap_sdl(current_fract,output);
 }
 
 /*ouvre et écrit dans la fifo fract les specs des fractales dans le fichier filename
