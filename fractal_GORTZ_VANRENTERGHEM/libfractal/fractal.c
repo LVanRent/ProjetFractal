@@ -8,7 +8,7 @@ struct fractal *fractal_new(const char *name, int width, int height, double a, d
 	return NULL;
      }
      new->name=name;
-     new->width=witdh;
+     new->width=width;
      new->height=height;
      new->a=a;
      new->b=b;   
@@ -16,13 +16,12 @@ struct fractal *fractal_new(const char *name, int width, int height, double a, d
 }
 
 void fractal_free(struct fractal *f){
-    	if(f->next != NULL) {
-		fractal_free(f->next);	
+	for(int i=0;i < f->width; i++){
+		if(f->dessin[i] != NULL){
+		free(f->dessin[i]);
+		}
 	}
-	if(f->dessin != NULL){
 	free(f->dessin);
-	}
-	
 }
 
 const char *fractal_get_name(const struct fractal *f){
