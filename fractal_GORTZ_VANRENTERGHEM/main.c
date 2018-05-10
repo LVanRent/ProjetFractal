@@ -13,14 +13,8 @@ pthread_t calc[];
 pthread_t comparateur;
 //char *fract[][5];
 
-
-typedef struct bufferNode {
-	struct buffer * next;
-	struct fractal * fract;		
-} bufferNode;
-
-bufferNode *HeadRead;
-bufferNode *HeadCalc;
+struct fractal *HeadRead; //head de la FIFO des fractales lues 
+struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
 
 void *thread_reader(void args);
 void file_open(string filename);
@@ -69,12 +63,12 @@ void file_open(char * filename){
 	
 	FILE *fp = fopen(filename,"r");
 	if(fp == NULL) printf("failopen\n");
-	bufferList * new_fract ;
+	struct fractal* new_fract ;
 	while(scancount != EOF){
-		new_fract = (bufferList *) malloc(sizeof(bufferList));
+		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("malloc\n");
 		printf("fscanf\n");
-		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
+		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
 		if(scancount != 5 && scancount != EOF) {
 			printf("%d %s \n", scancount,new_fract->name);
 			while(new_fract->name[0]=='#'){
@@ -84,11 +78,15 @@ void file_open(char * filename){
 		}
 		//producteur
 		if(scancount == 5){
-			addToBuffer();
+			addToBuffer(new_fract);
 			//printf("ajout de %s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
 		}
 	}
 	free(new_fract);
 		
+}
+
+void addToBuffer(struct fractal*){
+
 }
 
