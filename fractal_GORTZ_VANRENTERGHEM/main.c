@@ -16,7 +16,7 @@ pthread_t comparateur;
 
 typedef struct bufferList {
 	struct bufferList * next;
-	char name[128];
+	char name[65];
 	int w;
 	int h;
 	double cR;
