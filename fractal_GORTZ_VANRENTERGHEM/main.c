@@ -159,12 +159,12 @@ void file_open(char * filename){
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("malloc\n");
 		printf("fscanf\n");
-		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name,&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
+		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&new_fract->name[1],&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 		if(scancount != 5 && scancount != EOF) {
 			printf("%d %s \n", scancount,new_fract->name);
 			while(new_fract->name[0]=='#'){
 				while(fgetc(fp) !='\n'){}
-				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&new_fract->name,&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
+				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&new_fract->name[1],&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 			}
 		}
 		if(scancount == 5){
@@ -183,7 +183,7 @@ void *std_open(){
 		struct fractal* new_fract ;
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("entrez le nom de la fractale ou exit pour terminer suivit de la touche entré\n");
-		scanf("%s\n",&new_fract->name);
+		scanf("%s\n",&new_fract->name[1]);
 		if(strcmp(new_fract->name,"exit") == 0){
 			fractal_free(new_fract);
 			exit = 1;
