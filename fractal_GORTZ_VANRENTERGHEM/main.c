@@ -26,7 +26,7 @@ struct fractal *MaxMean; //fractale ayant la plus grande moyenne
 
 void *thread_reader(void args);
 void *thread_calc();
-void file_open(string filename);
+void file_open(char *filename);
 void std_open();
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
@@ -90,6 +90,7 @@ void *thread_reader(void args){
 	if(input){
 		pthread_join(stdin,NULL);
 	}
+	return(NULL);
 }
 
 
@@ -127,6 +128,7 @@ void *thread_calc(){
 			fractal_free(current_fract);
 		}
 	}
+	return(NULL);
 }
 
 /*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
@@ -153,14 +155,13 @@ void file_open(char * filename){
 			pushRead(new_fract);
 		}
 	}
-	free(new_fract);
-		
+	free(new_fract);		
 }
 
 
 /*routine du thread qui récupère les fractales sur l'entrée standard
 */
-void std_open(){
+void *std_open(){
 	int exit = 0;
 	while(!exit){
 		struct fractal* new_fract ;
@@ -177,7 +178,8 @@ void std_open(){
 			pushRead(new_fract);	
 			printf("fractale enregistrée\n");
 		}
-	}		
+	}
+	return(NULL);
 }
 
 
