@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
 #include "fractal.h"
 
 int maxthread = 5;
@@ -9,8 +10,8 @@ int showall = 0;
 int nonfiles = 0;
 int readFlag = 1;
 int count = 0;
-pthread_t reader;
-pthread_t calc[];
+pthread_t *reader;
+pthread_t **calc;
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
@@ -39,6 +40,11 @@ int main(int argc, char * argv[])
 			nonfiles+=2;
 		}
 	}
+	reader = (pthread_t *) malloc(sizeof(pthread));	
+	if(reader == NULL){
+		error(reader, "malloc")
+	}
+	calc = (pthread_t *)malloc(sizeof(pthread)*maxthread);
 	pthread_create(reader,&thread_reader,(void*) &argv[])//lecteur des fichiers
 	for(int i = 0; i < maxthreads ; i++){
 		pthread_create(calc[i],&thread_calc,NULL);
@@ -132,7 +138,6 @@ void file_open(char * filename){
 				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&new_fract->name,&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 			}
 		}
-		//producteur
 		if(scancount == 5){
 			pushRead(new_fract);
 		}
