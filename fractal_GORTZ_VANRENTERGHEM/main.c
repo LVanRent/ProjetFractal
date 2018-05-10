@@ -14,20 +14,17 @@ pthread_t comparateur;
 //char *fract[][5];
 
 
-typedef struct bufferList {
-	struct bufferList * next;
-	char name[65];
-	int w;
-	int h;
-	double cR;
-	double cI;
-		
-} bufferList;
+typedef struct bufferNode {
+	struct buffer * next;
+	struct fractal * fract;		
+} bufferNode;
 
-bufferList *lastread;
+bufferNode *HeadRead;
+bufferNode *HeadCalc;
 
 void *thread_reader(void args);
 void file_open(string filename);
+void addToBuffer
 
 int main(int argc, char * argv[])
 {
@@ -87,8 +84,8 @@ void file_open(char * filename){
 		}
 		//producteur
 		if(scancount == 5){
-			printf("ajout de %s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
-			free(new_fract);
+			addToBuffer();
+			//printf("ajout de %s %d %d %lf %lf \n",&new_fract->name,&new_fract->w,&new_fract->h,&new_fract->cR,&new_fract->cI);
 		}
 	}
 	free(new_fract);
