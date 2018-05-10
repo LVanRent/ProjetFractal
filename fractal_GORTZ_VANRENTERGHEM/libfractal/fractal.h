@@ -2,7 +2,6 @@
 #define _FRACTAL_H
 
 struct fractal {
-    char name[];
     int width;
     int height;
     double a;
@@ -10,6 +9,7 @@ struct fractal {
     double **dessin; //matrice contenant les valeurs de la fractale évaluées en chaque point
     double mean;
     struct fractal * next;
+    char name[];
 };
 
 /*
