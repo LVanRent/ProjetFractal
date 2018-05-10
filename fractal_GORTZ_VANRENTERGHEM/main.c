@@ -10,6 +10,7 @@ int nonfiles =0;
 int fcount = 0;
 pthread_t reader;
 pthread_t calc[];
+char *outputf;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
 struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
@@ -72,6 +73,19 @@ void *thread_reader(void args){
 	}
 }
 
+void *thread_calc(){
+	//zone critique
+	struct fractal * current_fract = popRead();
+	//end zone critique
+	int w = fractal_get_width();
+	int h = fractal_get_height();
+	for(int i = 0; i<w;i++){
+		for(int j = 0; j<h ; j++){
+			fractal_compute_value(current_fract,i,j);
+		}
+	}
+	current_fract->mean = meanCalc(current_fract);
+}
 
 /*ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
 type de fichier name-w-h-cR-cI*/
@@ -140,7 +154,6 @@ void pushCalc(struct fractal* new_fract){
 	struct fract *oldList;
 	//zone critique
 	if(!showall){
-		//zone critique
 		if(new_fract->mean > HeadCalc->mean){
 			oldList = HeadCalc;
 			HeadCalc = new_fract;
@@ -162,6 +175,8 @@ void pushCalc(struct fractal* new_fract){
 		freeCalc(oldList);
 	}
 }
+
+
 
 void freeCalc(struct fract* head){
 	struct fractal * toFree;
