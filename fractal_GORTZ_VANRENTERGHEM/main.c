@@ -31,10 +31,12 @@ void file_open(char *filename);
 void std_open();
 void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
+int g_argc; //global argc
 
 
 int main(int argc, char * argv[])
 {
+	g_argc = argc;
 	pthread_mutex_init(&mutex, NULL);
 	sem_init(&empty, 0 , N);  // initialisé buffer vide
 	sem_init(&full, 0 , 0);   // initialisé buffer vide
@@ -42,12 +44,12 @@ int main(int argc, char * argv[])
 	outfile = argv[argc-1]; //fichier output
 	int i;
 	for(i = 1; i<3;i++){
-		if(strcomp("-d",argv[i])){//récupération de showall
+		if(strcmp("-d",argv[i])){//récupération de showall
 			showall = 1;
 			i++;
 			nonfiles++;
 		}	
-		if(strcomp("--maxthreads",argv[i])){//récupération de maxthread	
+		if(strcmp("--maxthreads",argv[i])){//récupération de maxthread	
 			maxthread = (argv[i+1]);
 			i++;
 			nonfiles+=2;
@@ -86,7 +88,7 @@ int main(int argc, char * argv[])
 */
 void *thread_reader(void *args){
 	char** argv = (char **) args;
-	int argc = length(argv);
+	int argc = g_argc;
 	int input = 0;
 	int i;
 	for(i = argc-2;i > nonfiles;i--){
@@ -180,7 +182,7 @@ void *std_open(){
 		new_fract = (struct fractal*) malloc(sizeof(struct fractal*));
 		printf("entrez le nom de la fractale ou exit pour terminer suivit de la touche entré\n");
 		scanf("%s\n",&new_fract->name);
-		if(strcomp(new_fract,"exit") == 0){
+		if(strcmp(new_fract,"exit") == 0){
 			fractal_free(new_fract);
 			exit = 1;
 		}
