@@ -5,11 +5,12 @@
 #include "fractal.h"
 
 int maxthread = 500;
-int showall =0;
-int nonfiles =0;
+int showall = 0;
+int nonfiles = 0;
 int readFlag = 1;
 pthread_t reader;
 pthread_t calc[];
+thread_toBMP[];
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
@@ -78,22 +79,26 @@ void *thread_reader(void args){
 }
 
 void *thread_calc(){
-	while(readFlag){
-		//zone critique
+	int popSuccess = 1;
+	while(readFlag || popSuccess){
 		struct fractal * current_fract = popRead();
-		//end zone critique
-		int w = fractal_get_width();
-		int h = fractal_get_height();
-		for(int i = 0; i<w;i++){
-			for(int j = 0; j<h ; j++){
-				fractal_compute_value(current_fract,i,j);
-			}
+		if(current_fract == NULL){
+			popSuccess = 0;
 		}
-		current_fract->mean = meanCalc(current_fract);
+		else{
+			int w = fractal_get_width(current_fract);
+			int h = fractal_get_height(current_fract);
+			for(int i = 0; i<w;i++){
+				for(int j = 0; j<h ; j++){
+					fractal_compute_value(current_fract,i,j);
+				}
+			}
+			current_fract->mean = meanCalc(current_fract);
+		}
 	}
 }
 
-/*ouvre et écrit dans le tableau fract les specs des fractales dans le fichier filename
+/*ouvre et écrit dans la fifo fract les specs des fractales dans le fichier filename
 type de fichier name-w-h-cR-cI*/
 void file_open(char * filename){
 	int scancount=5;
