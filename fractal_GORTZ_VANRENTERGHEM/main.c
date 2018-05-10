@@ -40,7 +40,8 @@ int main(int argc, char * argv[])
 	sem_init(&full, 0 , 0);   // initialisé buffer vide
 
 	outfile = argv[argc-1]; //fichier output
-	for(int i = 1; i<3;i++){
+	int i;
+	for(i = 1; i<3;i++){
 		if(strcomp("-d",argv[i])){//récupération de showall
 			showall = 1;
 			i++;
@@ -52,21 +53,30 @@ int main(int argc, char * argv[])
 			nonfiles+=2;
 		}
 	}
-	reader = (pthread_t *) malloc(sizeof(pthread));	
+	reader = (pthread_t *) malloc(sizeof(pthread_t));	
 	if(reader == NULL){
-		error(reader, "malloc")
+		exit(EXIT_FAILURE);
 	}
-	calc = (pthread_t *)malloc(sizeof(pthread)*maxthread);
-	pthread_create(reader,&thread_reader,(void*) &argv[])//lecteur des fichiers
-	for(int i = 0; i < maxthreads ; i++){
-		pthread_create(calc[i],&thread_calc,NULL);
+	calc = (pthread_t *)malloc(sizeof(pthread_t)*maxthread);
+	if(calc == NULL){
+		exit(EXIT_FAILURE);
+	}
+	int err = pthread_create(reader,&thread_reader,(void*) &argv,NULL)//lecteur des fichiers
+	if(err != 0){
+		exit(EXIT_FAILURE);
+	}
+	for(i = 0; i < maxthreads ; i++){
+		err = pthread_create(calc[i],&thread_calc,NULL);
+		if(err != 0){
+			exit(EXIT_FAILURE);
+		}
 	}
 	pthread_join(reader,NULL);
 	readFlag = 0;
-	for(int i = 0; i < maxthreads-1; i++){
-		pthread_join(cacl[i],NULL);
+	for(i = 0; i < maxthread-1; i++){
+		pthread_join(calc[i],NULL);
 	}
-	write_bitmap_sdl(MaxMean,outfile));
+	write_bitmap_sdl(MaxMean,outfile);
 	fractal_free(MaxMean);
 }
 
@@ -74,14 +84,15 @@ int main(int argc, char * argv[])
 * dans le cas d'un '-', fait appel à un thread std_open() pour écrire sur l'entrée standard en parrallèle de la création 
 * des structures
 */
-void *thread_reader(void args){
+void *thread_reader(void *args){
 	char* argv[] = (char *) args;
 	int argc = length(argv);
 	int input = 0;
-	for(int i = argc-2;i > nonfiles;i--){
+	int i;
+	for(i = argc-2;i > nonfiles;i--){
 		if(argv[i][0] == '-'){
 			input = 1;
-			pthread_create(stdin,&std_open,NULL);
+			pthread_create(stdin,&std_open,NULL,NULL);
 			i--;
 		}
 		else{
@@ -117,12 +128,12 @@ void *thread_calc(){
 		double current_mean = ((double) mean)/(w*h); 
 		current_fract->mean = current_mean;
 		if(showall){
-			write_bitmap_sdl(current_fract,current_fract->name));
+			write_bitmap_sdl(current_fract,current_fract->name);
 		}
 		if(MaxMean->mean < current_mean){
 			pthread_mutex_lock(&mutexmean);
 			fractal_free(MaxMean);
-			MaxMean = current_frac;
+			MaxMean = current_fract;
 			pthread_mutex_unlock(&mutex);
 		}
 		else{
@@ -175,7 +186,7 @@ void *std_open(){
 		}
 		else{
 			printf("entrez les paramètres de la fractale au format width height a b séparé par des espace et appuyez sur entrer pour valider\n");
-			scanf("%d %d %lf %lf\n",&new_fract->w,&new_fract->h,&new_fract->a,&new_fract->b);
+			scanf("%d %d %lf %lf\n",&new_fract->width,&new_fract->height,&new_fract->a,&new_fract->b);
 			pushRead(new_fract);	
 			printf("fractale enregistrée\n");
 		}
