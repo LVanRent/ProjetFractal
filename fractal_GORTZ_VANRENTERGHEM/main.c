@@ -25,7 +25,7 @@ char *outfile;
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
 struct fractal *MaxMean; //fractale ayant la plus grande moyenne
 
-void *thread_reader(void args);
+void *thread_reader(void *args);
 void *thread_calc();
 void file_open(char *filename);
 void std_open();
@@ -61,7 +61,7 @@ int main(int argc, char * argv[])
 	if(calc == NULL){
 		exit(EXIT_FAILURE);
 	}
-	int err = pthread_create(reader,&thread_reader,(void*) &argv,NULL)//lecteur des fichiers
+	int err = pthread_create(reader,&thread_reader,(void*) &argv,NULL);//lecteur des fichiers
 	if(err != 0){
 		exit(EXIT_FAILURE);
 	}
@@ -85,7 +85,7 @@ int main(int argc, char * argv[])
 * des structures
 */
 void *thread_reader(void *args){
-	char* argv[] = (char *) args;
+	char* argv[] = (char **) args;
 	int argc = length(argv);
 	int input = 0;
 	int i;
