@@ -17,7 +17,8 @@ struct fractal *fractal_new(const char *name, int width, int height, double a, d
 }
 
 void fractal_free(struct fractal *f){
-	for(int i=0;i < f->width; i++){
+	int i;
+	for(i=0;i < f->width; i++){
 		if(f->dessin[i] != NULL){
 		free(f->dessin[i]);
 		}
