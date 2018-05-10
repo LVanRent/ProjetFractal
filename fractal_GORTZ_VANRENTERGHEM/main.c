@@ -5,6 +5,13 @@
 #include <errno.h>
 #include "fractal.h"
 
+
+pthread_mutex_t mutex;
+pthread_mutex_t mutexmean;
+sem_t empty;
+sem_t full;
+
+
 int maxthread = 5;
 int showall = 0;
 int nonfiles = 0;
@@ -27,6 +34,10 @@ struct fractal* popRead();
 
 int main(int argc, char * argv[])
 {
+	pthread_mutex_init(&mutex, NULL);
+	sem_init(&empty, 0 , N);  // initialisé buffer vide
+	sem_init(&full, 0 , 0);   // initialisé buffer vide
+
 	outfile = argv[argc-1]; //fichier output
 	for(int i = 1; i<3;i++){
 		if(strcomp("-d",argv[i])){//récupération de showall
@@ -107,10 +118,10 @@ void *thread_calc(){
 			write_bitmap_sdl(current_fract,current_fract->name));
 		}
 		if(MaxMean->mean < current_mean){
-			//zone critique
+			pthread_mutex_lock(&mutexmean);
 			fractal_free(MaxMean);
 			MaxMean = current_frac;
-			//end zone critique
+			pthread_mutex_unlock(&mutex);
 		}
 		else{
 			fractal_free(current_fract);
@@ -172,20 +183,24 @@ void std_open(){
 
 /*ajoute sur le début de la lifo des fractales non-calculées la fractale créée, gère également les mutex et sémaphore*/
 void pushRead(struct fractal* new_fract){
-	//zone critique
+	sem_wait(&empty); // attente d'un slot libre
+    	pthread_mutex_lock(&mutex);
 	new_fract->next = HeadRead;
 	HeadRead = new_fract;
 	count++;
-	//end zone critique
+	pthread_mutex_unlock(&mutex);
+    	sem_post(&full); // il y a un slot rempli en plus
 }
 
 /*retire la fractale sur le début de la lifo non-calculées, gère également les mutex et sémaphore*/
 struct fractal* popRead(){
-	//zone critique
+	sem_wait(&full); // attente d'un slot rempli
+   	pthread_mutex_lock(&mutex);
 	struct fractal* new_fract = HeadRead;
 	HeadRead = new_fract->next;
 	count--;
-	//end zone critique
+	pthread_mutex_unlock(&mutex);
+  	sem_post(&empty); // il y a un slot libre en plus
 	return(new_fract);
 }
 
