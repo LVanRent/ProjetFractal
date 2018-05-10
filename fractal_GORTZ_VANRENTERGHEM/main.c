@@ -66,7 +66,7 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 	for(i = 0; i < maxthreads ; i++){
-		err = pthread_create(calc[i],&thread_calc,NULL);
+		err = pthread_create(calc[i],&thread_calc,NULL,NULL);
 		if(err != 0){
 			exit(EXIT_FAILURE);
 		}
