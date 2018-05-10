@@ -19,7 +19,9 @@ void fractal_free(struct fractal *f){
     	if(f->next != NULL) {
 		fractal_free(f->next);	
 	}
+	if(f->dessin != NULL){
 	free(f->dessin);
+	}
 	
 }
 
