@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include "fractal.h"
 
-int maxthread = 500;
+int maxthread = 5;
 int showall = 0;
 int nonfiles = 0;
 int readFlag = 1;
@@ -15,7 +15,8 @@ pthread_t toBMP[];
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
-struct fractal* HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
+struct fractal *HeadCalc; //head de la fifo des fractales calculés (soit à afficher, soit les fractales de même moyenne)
+struct fractal *MaxMean;
 
 void *thread_reader(void args);
 void *thread_calc()
@@ -90,29 +91,18 @@ void *thread_calc(){
 		current_fract = popRead();
 		w = fractal_get_width(current_fract);
 		h = fractal_get_height(current_fract);
+		int mean = 0;
 		for(i = 0; i<w;i++){
 			for(j = 0; j<h ; j++){
-				fractal_compute_value(current_fract,i,j);
+				mean += fractal_compute_value(current_fract,i,j);
 			}
 		}
-	}
-}
-
-void *thread_compare(){
-	struct fractal * current_fract;
-	current_fract->mean = meanCalc(current_fract);
-}
-
-double meanCalc(struct fract * current_fract){
-	double mean = 0;
-	int h = get_height(current_fract);
-	int w = get_width(current_fract);
-	for(int i = 0; i<w;i++){
-		for(int j = 0; j<h ; j++){
-			mean += (double) get_value(current_fract, i , j);
+		current_fract->mean = ((double) mean)/(w*h); 
+		if(showall){
+			write_bitmap_sdl(current_fract,current_fract->name));
 		}
+		
 	}
-	return(mean/(w*h));
 }
 
 void *toBMP(){
