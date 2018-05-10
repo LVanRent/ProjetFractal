@@ -8,6 +8,7 @@ int maxthread = 500;
 int showall = 0;
 int nonfiles = 0;
 int readFlag = 1;
+int count = 0;
 pthread_t reader;
 pthread_t calc[];
 thread_toBMP[];
@@ -79,23 +80,34 @@ void *thread_reader(void args){
 }
 
 void *thread_calc(){
-	int popSuccess = 1;
-	while(readFlag || popSuccess){
-		struct fractal * current_fract = popRead();
-		if(current_fract == NULL){
-			popSuccess = 0;
-		}
-		else{
-			int w = fractal_get_width(current_fract);
-			int h = fractal_get_height(current_fract);
-			for(int i = 0; i<w;i++){
-				for(int j = 0; j<h ; j++){
-					fractal_compute_value(current_fract,i,j);
-				}
+	struct fractal * current_fract;
+	int w;
+	int h;
+	int i;
+	int j;
+	while(readFlag || (count != 0)){
+		current_fract = popRead();
+		w = fractal_get_width(current_fract);
+		h = fractal_get_height(current_fract);
+		for(i = 0; i<w;i++){
+			for(j = 0; j<h ; j++){
+				fractal_compute_value(current_fract,i,j);
 			}
-			current_fract->mean = meanCalc(current_fract);
+		}
+		current_fract->mean = meanCalc(current_fract);
+	}
+}
+
+double meanCalc(struct fract * current_fract){
+	double mean = 0;
+	int h = get_height(current_fract);
+	int w = get_width(current_fract);
+	for(int i = 0; i<w;i++){
+		for(int j = 0; j<h ; j++){
+			mean += (double) get_value(current_fract, i , j);
 		}
 	}
+	return(mean/(w*h));
 }
 
 /*ouvre et écrit dans la fifo fract les specs des fractales dans le fichier filename
@@ -150,6 +162,7 @@ void pushRead(struct fractal* new_fract){
 	//zone critique
 	new_fract->next = HeadRead;
 	HeadRead = new_fract;
+	count++;
 	//end zone critique
 }
 
@@ -157,6 +170,7 @@ struct fractal* popRead(){
 	//zone critique
 	struct fractal* new_fract = HeadRead;
 	HeadRead = new_fract->next;
+	count--;
 	//end zone critique
 	return(new_fract);
 }
