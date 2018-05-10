@@ -11,7 +11,7 @@ int readFlag = 1;
 int count = 0;
 pthread_t reader;
 pthread_t calc[];
-thread_toBMP[];
+pthread_t toBMP[];
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
@@ -95,8 +95,12 @@ void *thread_calc(){
 				fractal_compute_value(current_fract,i,j);
 			}
 		}
-		current_fract->mean = meanCalc(current_fract);
 	}
+}
+
+void *thread_compare(){
+	struct fractal * current_fract;
+	current_fract->mean = meanCalc(current_fract);
 }
 
 double meanCalc(struct fract * current_fract){
@@ -109,6 +113,14 @@ double meanCalc(struct fract * current_fract){
 		}
 	}
 	return(mean/(w*h));
+}
+
+void *toBMP(){
+	struct *fractal current_fract = popCalc();
+	if(showall){
+		write_bitmap_sdl(current_fract,current_fract->name));
+	}
+	write_bitmap_sdl(current_fract,output);
 }
 
 /*ouvre et écrit dans la fifo fract les specs des fractales dans le fichier filename
@@ -140,6 +152,8 @@ void file_open(char * filename){
 		
 }
 
+
+/*récupère les fractales sur l'entrée standard*/
 void std_open(){
 	int scancount=5;
 	int exit = 0;
@@ -159,6 +173,8 @@ void std_open(){
 	}		
 }
 
+
+/*ajoute sur le début de la lifo des fractales non-calculées la fractale créée, gère également les mutex et sémaphore*/
 void pushRead(struct fractal* new_fract){
 	//zone critique
 	new_fract->next = HeadRead;
@@ -167,6 +183,7 @@ void pushRead(struct fractal* new_fract){
 	//end zone critique
 }
 
+/*retire la fractale sur le début de la lifo non-calculées, gère également les mutex et sémaphore*/
 struct fractal* popRead(){
 	//zone critique
 	struct fractal* new_fract = HeadRead;
@@ -176,6 +193,9 @@ struct fractal* popRead(){
 	return(new_fract);
 }
 
+/* dans le cas showall = 1 ajoute la fractale calculée sur la lifo des fractales de moyenne maximum en cas d'égalité,
+la remplace si meilleur, est ignoré sinon
+dans le cas showall= 1 ajoute la fractale à la lifo de toutes les fractales déjà calculées*/
 void pushCalc(struct fractal* new_fract){
 	struct fract *oldList;
 	//zone critique
