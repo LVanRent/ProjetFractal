@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "fractal.h"
 
 /* inutilisé car la foction read utilise directement */
@@ -7,7 +8,7 @@ struct fractal *fractal_new(const char *name, int width, int height, double a, d
      if(new==NULL){  //En cas d'erreur lors du malloc, retourn NULL
 	return NULL;
      }
-     new->name=name;
+     strcpy(new->name,name);
      new->width=width;
      new->height=height;
      new->a=a;
@@ -29,7 +30,6 @@ const char *fractal_get_name(const struct fractal *f){
 }
 
 int fractal_get_value(const struct fractal *f, int x, int y){
-     
      return f->dessin[x][y];
 }
 
