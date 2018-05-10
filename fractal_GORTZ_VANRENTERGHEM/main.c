@@ -85,7 +85,7 @@ int main(int argc, char * argv[])
 * des structures
 */
 void *thread_reader(void *args){
-	char* argv[] = (char **) args;
+	char** argv = (char **) args;
 	int argc = length(argv);
 	int input = 0;
 	int i;
