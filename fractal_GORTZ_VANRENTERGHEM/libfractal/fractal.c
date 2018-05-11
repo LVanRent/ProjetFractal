@@ -2,17 +2,24 @@
 #include <string.h>
 #include "fractal.h"
 
-/* inutilisé car la foction read utilise directement */
+
 struct fractal *fractal_new(const char *name, int width, int height, double a, double b){
-     struct fractal *new=(struct fractal *)malloc(sizeof(struct fractal));
-     if(new==NULL){  //En cas d'erreur lors du malloc, retourn NULL
-	return NULL;
-     }
-     strcpy(new->name,name);
-     new->width=width;
-     new->height=height;
-     new->a=a;
-     new->b=b;   
+    struct fractal *new=(struct fractal *)malloc(sizeof(struct fractal));
+    if(new==NULL){  //En cas d'erreur lors du malloc, retourn NULL
+		return NULL;
+    }
+    new->name = (char*) malloc(65*sizeof(char));
+	strcpy(new->name,name);
+    new->width=width;
+    new->height=height;
+    new->a=a;
+    new->b=b;   
+    new->mean =0;
+	new->dessin = (int**)malloc(sizeof(int*)*height);
+	int i;
+	for(i = 0; i< height;i++){
+		new->dessin[i] = (int*)malloc(sizeof(int)*width);
+	}
     return new; //Une fois la nouvelle structure créée, on retourne le pointeur vers celle-ci
 }
 
@@ -24,6 +31,8 @@ void fractal_free(struct fractal *f){
 		}
 	}
 	free(f->dessin);
+	free(f->name);
+	free(f);
 }
 
 const char *fractal_get_name(const struct fractal *f){
@@ -53,3 +62,4 @@ double fractal_get_a(const struct fractal *f){
 double fractal_get_b(const struct fractal *f){
     return f->b;
 }
+
