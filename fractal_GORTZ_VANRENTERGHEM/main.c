@@ -36,7 +36,8 @@ void pushRead(struct fractal* new_fract);
 struct fractal* popRead();
 int g_argc; //global argc
 
-
+/*vérifie l'existence d'un fichier
+ */
 int file_exists(char *filename){
 	int a = open(filename, O_RDONLY);
 	if(a==-1) return -1;
