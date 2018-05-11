@@ -130,6 +130,227 @@ void *thread_calc(){
 		int mean = 0;
 		for(i = 0; i<w;i++){
 			for(j = 0; j<h ; j++){
+				//printf("mean\n");
+				mean += fractal_compute_value(current_fract,i,j);
+				//printf("mean 2\n");
+			}
+		}
+		double current_mean = ((double) mean)/(w*h); 
+		printf("mean 3 %s\n",newfract->name);
+		current_fract->mean = current_mean;
+		if(showall){
+			printf("mean 4 \n");
+			write_bitmap_sdl(current_fract,current_fract->name);
+			printf("mean 5 %s \n",newfract->name);
+		}
+		if(MaxMean->mean < current_mean){
+			pthread_mutex_lock(&mutexmean);
+			fractal_free(MaxMean);
+			MaxMean = current_fract;
+			pthread_mutex_unlock(&mutex);
+		}
+		else{
+			fractal_free(current_fract);
+		}
+	}
+	return(NULL);
+}
+
+/*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
+* au format spécifié
+*
+void file_open(char * filename){
+	int scancount=5;
+	char name[64];
+	int width,height;
+	double a,b;
+	FILE *fp = fopen(filename,"r");
+	if(fp == NULL){
+		exit(EXIT_FAILURE);
+	}
+	struct fractal* new_fract ;
+	while(scancount != EOF){
+		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&name[0],&width,&height,&a,&b);
+		new_fract = fractal_new(name,width,height,a,b);
+		if(scancount != 5 && scancount != EOF) {
+			while(name[0]=='#'){
+				while(fgetc(fp) !='\n'){}
+				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&name[0],&width,&height,&a,&b);
+				fractal_new(name,width,height,a,b);		
+			}
+		}
+		if(scancount == 5){
+			pushRead(new_fract);
+		}
+	}
+	fclose(fp);
+	fractal_free(new_fract);		
+}*/
+
+/*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
+* au format spécifié*/
+void file_open(char * filename){
+	FILE *fp = fopen(filename,"r");
+	if(fp == NULL){
+		exit(EXIT_FAILURE);
+	}
+	char *line = (char *) malloc(sizeof(char)*130);
+	char *name;
+	int width,height;
+	double a,b;
+	struct fractal * newfract;
+	while((fgets(line,130,fp)) != NULL){
+		if(line[0] != '#'){
+			name = strtok(line," ");
+			width = atoi(strtok(NULL, " "));
+			height = atoi(strtok(NULL, " ")); 
+			a = atof(strtok(NULL, " "));
+			b = atof(strtok(NULL, " "));
+			newfract = fractal_new(name,width,height,a,b);
+			pushRead(newfract);	
+			printf("%s %d %d %lf %lf\n",newfract->name,newfract->width,newfract->height,newfract->a,newfract->b);
+		}
+	}
+	fclose(fp);
+	printf("%s closed\n",filename);
+	free(line);
+}
+
+
+/*routine du thread qui récupère les fractales sur l'entrée standard
+*/
+void *std_open(){
+	int exit = 0;
+	char *name = (char *) malloc(sizeof(char)*100);
+	int width,height;
+	double a,b;
+	while(!exit){
+		struct fractal* new_fract ;
+		printf("entrez le nom de la fractale ou exit pour terminer suivit de la touche entré\n");
+		scanf("%s\n",&name[0]);
+		if(strcmp(name,"exit") == 0){
+			fractal_free(new_fract);
+			exit = 1;
+		}
+		else{
+			printf("entrez les paramètres de la fractale au format width height a b séparé par des espace et appuyez sur entrer pour valider\n");
+			scanf("%d %d %lf %lf\n",&width,&height,&a,&b);
+			new_fract = fractal_new(name,width,height,a,b);
+			pushRead(new_fract);	
+			printf("fractale enregistrée\n");
+		}
+	}
+	return(NULL);
+}
+
+/*ajoute sur le début de la lifo des fractales non-calculées la fractale créée, gère également les mutex et sémaphore*/
+void pushRead(struct fractal* new_fract){
+	sem_wait(&empty); // attente d'un slot libre
+    pthread_mutex_lock(&mutex);
+	count++;
+	new_fract->next = HeadRead;
+	HeadRead = new_fract;
+	pthread_mutex_unlock(&mutex);
+    sem_post(&full); // il y a un slot rempli en plus
+}
+
+/*retire la fractale sur le début de la lifo non-calculées, gère également les mutex et sémaphore*/
+struct fractal* popRead(){
+	sem_wait(&full); // attente d'un slot rempli
+   	pthread_mutex_lock(&mutex);
+	struct fractal* new_fract = HeadRead;
+	HeadRead = new_fract->next;
+	count--;
+	pthread_mutex_unlock(&mutex);
+  	sem_post(&empty); // il y a un slot libre en plus
+	return(new_fract);
+}
+
+
+
+		}
+	for(i = 1; i<min;i++){
+		if(strcmp("-d",argv[i]) == 0){//récupération de showall
+			showall = 1;
+			i++;
+			nonfiles++;
+		}	
+		if(strcmp("--maxthreads",argv[i]) == 0){//récupération de maxthread	
+			maxthread = atoi(argv[i+1]);
+			i+=2;
+			nonfiles+=2;
+		}
+	}
+	calc = (pthread_t *)malloc(sizeof(pthread_t)*maxthread);
+	if(calc == NULL){
+		exit(EXIT_FAILURE);
+	}
+	int err = pthread_create(&reader,NULL,&thread_reader,(void*) argv);//lecteur des fichiers
+	if(err != 0){
+		exit(EXIT_FAILURE);
+	}
+	for(i = 0; i < maxthread ; i++){
+		err = pthread_create(&(calc[i]),NULL,&thread_calc,NULL);
+		if(err != 0){
+			exit(EXIT_FAILURE);
+		}
+	};
+	pthread_join(reader,NULL);
+	readFlag = 0;
+	for(i = 0; i < maxthread-1; i++){
+		pthread_join(calc[i],NULL);
+	}
+	write_bitmap_sdl(MaxMean,outfile);
+	fractal_free(MaxMean);
+	free(calc);
+	return(0);
+}
+
+/*routine du thread séparant les arguments en noms de fichiers pour les ouvrir individuellement dans la routine file_open()
+* dans le cas d'un '-', fait appel à un thread std_open() pour écrire sur l'entrée standard en parrallèle de la création 
+* des structures
+*/
+void *thread_reader(void *args){
+	char** argv = (char **) args;
+	int argc = g_argc;
+	int input = 0;
+	int i;
+	pthread_t stdin;
+	for(i = argc-2;i > nonfiles;i--){
+		if(argv[i][0] == '-'){
+			input = 1;
+			pthread_create(&stdin,NULL,&std_open,NULL);
+			i--;
+		}
+		else{
+			file_open(argv[i]);
+		}
+	}
+	if(input){
+		pthread_join(stdin,NULL);
+	}
+	return(NULL);
+}
+
+
+/*routine des threads qui calculent les valeurs des pixels, calcule également la moyenne, vérifie si il s'agit de la meilleure
+* et converti en BMP si '-d' est spécifié
+*/
+void *thread_calc(){
+	struct fractal * current_fract;
+	int w;
+	int h;
+	int i;
+	int j;
+	while(readFlag || (count != 0)){
+		current_fract = popRead();
+		struct fractal * newfract = current_fract;
+		printf("%s %d %d %lf %lf récupérée\n",newfract->name,newfract->width,newfract->height,newfract->a,newfract->b);
+		w = fractal_get_width(current_fract);
+		h = fractal_get_height(current_fract);
+		int mean = 0;
+		for(i = 0; i<w;i++){
+			for(j = 0; j<h ; j++){
 				printf("mean\n");
 				mean += fractal_compute_value(current_fract,i,j);
 				printf("mean 2\n");
