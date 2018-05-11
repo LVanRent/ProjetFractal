@@ -6,10 +6,10 @@ struct fractal {
     int height;
     double a;
     double b;
-    double **dessin; //matrice contenant les valeurs de la fractale évaluées en chaque point
+    int **dessin; //matrice contenant les valeurs de la fractale évaluées en chaque point
     double mean;
     struct fractal * next;
-    char name[];
+    char *name;
 };
 
 /*
