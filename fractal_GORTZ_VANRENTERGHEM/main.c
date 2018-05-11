@@ -89,11 +89,8 @@ int main(int argc, char * argv[])
 	pthread_join(reader,NULL);
 	readFlag = 0;
 	for(i = 0; i < maxthread; i++){
-		//printf("join %d \n",i);
 		pthread_join(calc[i],NULL);
-		//printf("join2 %d \n",i);
 	}
-	//printf("best\n");
 	if(file_exists(outfile)){
 		printf("%s existe déjà",outfile);
 		}
@@ -146,85 +143,40 @@ void *thread_calc(){
 	while(readFlag || (count != 0)){
 		if(count){
 		current_fract = popRead();
-		//struct fractal * newfract = current_fract;
-		//printf("%s %d %d %lf %lf récupérée\n",newfract->name,newfract->width,newfract->height,newfract->a,newfract->b);
 		w = fractal_get_width(current_fract);
 		h = fractal_get_height(current_fract);
 		int mean = 0;
 		for(i = 0; i<w;i++){
 			for(j = 0; j<h ; j++){
-				//printf("mean\n");
 				mean += fractal_compute_value(current_fract,i,j);
-				//printf("mean 2\n");
 			}
 		}
 		double current_mean = (mean)/(w*h); 
-		//printf("mean 3 %s\n",newfract->name);
 		current_fract->mean = current_mean;
 		if(showall){
-			//printf("mean 4 \n");
 			if(file_exists(outfile)){
 		printf("%s existe déjà",current_fract->name);
-		}
-	else{
+			}
+		else{
 			write_bitmap_sdl(current_fract,current_fract->name);
-		}	//printf("mean 5 %s \n",newfract->name);
-			//printf("readFlag at mean 5: %d\n",readFlag);
+			}	
 		}
-		//printf("premutex\n");
 		pthread_mutex_lock(&mutexmean);
-		//printf("postmutex\n");
-		//printf("(*MaxMean)->mean %f \n",(*MaxMean)->mean);
-		//printf("lu\n");
 		if((*MaxMean)->mean < current_mean){
-			//printf("change MaxMean\n");
-			fflush(stdout);
+			
 			fractal_free(*MaxMean);
 			*MaxMean = current_fract;
 			
 			
 		}
 		else{
-			//printf("fractal_free\n");
 			fractal_free(current_fract);
 		}
 		pthread_mutex_unlock(&mutexmean);
-		//printf("aucune boucle \n");
 	}
 	}
 	return(NULL);
 }
-
-/*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
-* au format spécifié
-*
-void file_open(char * filename){
-	int scancount=5;
-	char name[64];
-	int width,height;
-	double a,b;
-	FILE *fp = fopen(filename,"r");
-	if(fp == NULL){
-		exit(EXIT_FAILURE);
-	}
-	struct fractal* new_fract ;
-	while(scancount != EOF){
-		scancount = fscanf(fp,"%s %d %d %lf %lf\n",&name[0],&width,&height,&a,&b);
-		new_fract = fractal_new(name,width,height,a,b);
-		if(scancount != 5 && scancount != EOF) {
-			while(name[0]=='#'){
-				while(fgetc(fp) !='\n'){}
-				scancount = fscanf(fp,"%s %d %d %lf %lf \n",&name[0],&width,&height,&a,&b);
-				fractal_new(name,width,height,a,b);		
-			}
-		}
-		if(scancount == 5){
-			pushRead(new_fract);
-		}
-	}
-	fclose(fp);
-	fractal_free(new_fract);		
-}*/
 
 /*ouvre et écrit dans la fifo des fractales à calculer les structures des fractales obtennues à partir des fichier entrés
 * au format spécifié*/
@@ -247,11 +199,9 @@ void *file_open(char * filename){
 			b = atof(strtok(NULL, " "));
 			newfract = fractal_new(name,width,height,a,b);
 			pushRead(newfract);	
-			//printf("%s %d %d %lf %lf\n",newfract->name,newfract->width,newfract->height,newfract->a,newfract->b);
-		}
+			}
 	}
 	fclose(fp);
-	//printf("%s closed\n",filename);
 	free(line);
 	return NULL;
 }
@@ -278,7 +228,6 @@ void *std_open(){
 				b = atof(strtok(NULL, " "));
 				newfract = fractal_new(name,width,height,a,b);
 				pushRead(newfract);	
-				//printf("%s %d %d %lf %lf\n",newfract->name,newfract->width,newfract->height,newfract->a,newfract->b);
 				printf("entrez la fractale au format name width height a b séparé par des espace ou exit suivi de 0 1 2 3 pour terminer, puis pressez entrée\n");
 			}
 			else {
