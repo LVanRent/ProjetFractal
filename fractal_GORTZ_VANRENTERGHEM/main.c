@@ -14,6 +14,7 @@ pthread_mutex_t mutexmean;
 sem_t empty;
 sem_t full;
 
+
 int maxthread = 5;
 int showall = 0;
 int nonfiles = 0;
@@ -24,7 +25,7 @@ pthread_t *calc;
 char *outfile;
 
 struct fractal *HeadRead; //head de la FIFO des fractales lues 
-struct fractal *MaxMean; //fractale ayant la plus grande moyenne
+struct fractal **MaxMean; //fractale ayant la plus grande moyenne
 
 void *thread_reader(void *args);
 void *thread_calc();
@@ -37,10 +38,11 @@ int g_argc; //global argc
 
 int main(int argc, char * argv[])
 {
+	struct fractal * MaxMeanP = fractal_new("placeholder",0,0,0.0,0.0);
+	MaxMean = &MaxMeanP;
 	g_argc = argc;
 	pthread_mutex_init(&mutex, NULL);
 	
-
 	outfile = argv[argc-1]; //fichier output
 	int i;
 	int min = 3;
@@ -78,11 +80,14 @@ int main(int argc, char * argv[])
 	};
 	pthread_join(reader,NULL);
 	readFlag = 0;
-	for(i = 0; i < maxthread-1; i++){
+	for(i = 0; i < maxthread; i++){
+		printf("join %d \n",i);
 		pthread_join(calc[i],NULL);
+		printf("join2 %d \n",i);
 	}
-	write_bitmap_sdl(MaxMean,outfile);
-	fractal_free(MaxMean);
+	printf("best\n");
+	write_bitmap_sdl(*MaxMean,outfile);
+	fractal_free(*MaxMean);
 	free(calc);
 	return(0);
 }
@@ -137,23 +142,34 @@ void *thread_calc(){
 				//printf("mean 2\n");
 			}
 		}
-		double current_mean = ((double) mean)/(w*h); 
+		double current_mean = (mean)/(w*h); 
 		printf("mean 3 %s\n",newfract->name);
 		current_fract->mean = current_mean;
 		if(showall){
 			printf("mean 4 \n");
 			write_bitmap_sdl(current_fract,current_fract->name);
 			printf("mean 5 %s \n",newfract->name);
+			printf("readFlag at mean 5: %d\n",readFlag);
 		}
-		if(MaxMean->mean < current_mean){
-			pthread_mutex_lock(&mutexmean);
-			fractal_free(MaxMean);
-			MaxMean = current_fract;
-			pthread_mutex_unlock(&mutex);
+		printf("premutex\n");
+		pthread_mutex_lock(&mutexmean);
+		printf("postmutex\n");
+		printf("(*MaxMean)->mean %f \n",(*MaxMean)->mean);
+		printf("lu\n");
+		if((*MaxMean)->mean < current_mean){
+			printf("change MaxMean\n");
+			fflush(stdout);
+			fractal_free(*MaxMean);
+			*MaxMean = current_fract;
+			
+			
 		}
 		else{
+			printf("fractal_free\n");
 			fractal_free(current_fract);
 		}
+		pthread_mutex_unlock(&mutexmean);
+		printf("aucune boucle \n");
 	}
 	return(NULL);
 }
@@ -267,3 +283,5 @@ struct fractal* popRead(){
   	sem_post(&empty); // il y a un slot libre en plus
 	return(new_fract);
 }
+
+
